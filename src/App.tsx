@@ -1,6 +1,9 @@
 import './App.css'
+import { useStacksWallet } from './hooks/useStacksWallet'
 
 function App() {
+  const { isConnected, address, connect, disconnect } = useStacksWallet()
+
   return (
     <div className="app">
       <main className="card">
@@ -15,19 +18,37 @@ function App() {
 
         <section className="section">
           <h2>Wallet</h2>
-          <p className="section-text">Wallet connection placeholder</p>
-          <button disabled>Connect Wallet</button>
+          <p className="network-badge">Network: Stacks Testnet</p>
+          {isConnected ? (
+            <>
+              <p className="section-text address">{address}</p>
+              <button onClick={disconnect} className="btn-secondary">
+                Disconnect
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="section-text">Connect your wallet to check eligibility</p>
+              <button onClick={connect}>Connect Wallet</button>
+            </>
+          )}
         </section>
 
         <section className="section">
           <h2>Eligibility</h2>
-          <p className="section-text">Eligibility info placeholder</p>
+          <p className="section-text">
+            {isConnected
+              ? 'Eligibility info placeholder'
+              : 'Connect wallet to check eligibility'}
+          </p>
         </section>
 
         <section className="section">
           <h2>Claim</h2>
-          <p className="section-text">Claim status placeholder</p>
-          <button disabled>Claim my Spray</button>
+          <p className="section-text">
+            {isConnected ? 'Claim status placeholder' : 'Connect wallet to claim'}
+          </p>
+          <button disabled={!isConnected}>Claim my Spray</button>
         </section>
       </main>
     </div>
