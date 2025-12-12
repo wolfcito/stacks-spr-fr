@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import { useStacksWallet } from './hooks/useStacksWallet'
+import { claimSpray } from './lib/claimSpray'
+import { getTxUrl } from './config/stacks'
 
 interface Distribution {
   contractAddress: string
@@ -14,6 +16,9 @@ function App() {
   const [distribution, setDistribution] = useState<Distribution | null>(null)
   const [distributionError, setDistributionError] = useState<string | null>(null)
   const [isLoadingDistribution, setIsLoadingDistribution] = useState(true)
+  const [isClaiming, setIsClaiming] = useState(false)
+  const [txId, setTxId] = useState<string | null>(null)
+  const [claimError, setClaimError] = useState<string | null>(null)
 
   useEffect(() => {
     async function loadDistribution() {
@@ -38,6 +43,26 @@ function App() {
   const eligibleAmount =
     distribution && address ? distribution.claims[address]?.amount : null
   const isEligible = eligibleAmount !== null && eligibleAmount !== undefined
+
+  const handleClaim = async () => {
+    setIsClaiming(true)
+    setClaimError(null)
+    try {
+      await claimSpray({
+        onFinish: (txId) => {
+          setTxId(txId)
+          setIsClaiming(false)
+        },
+        onCancel: () => {
+          setIsClaiming(false)
+          setClaimError('Transaction was cancelled')
+        },
+      })
+    } catch (error) {
+      setIsClaiming(false)
+      setClaimError(error instanceof Error ? error.message : 'Failed to claim')
+    }
+  }
 
   return (
     <div className="app">
@@ -90,14 +115,38 @@ function App() {
 
         <section className="section">
           <h2>Claim</h2>
-          <p className="section-text">
-            {!isConnected
-              ? 'Connect wallet to claim'
-              : !isEligible
-                ? 'You are not eligible to claim'
-                : 'You can claim your Spray tokens'}
-          </p>
-          <button disabled={!isConnected || !isEligible}>Claim my Spray</button>
+          {txId ? (
+            <>
+              <p className="section-text success">Transaction submitted!</p>
+              <a
+                href={getTxUrl(txId)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="tx-link"
+              >
+                View on Stacks Explorer
+              </a>
+            </>
+          ) : (
+            <>
+              <p className="section-text">
+                {!isConnected
+                  ? 'Connect wallet to claim'
+                  : !isEligible
+                    ? 'You are not eligible to claim'
+                    : isClaiming
+                      ? 'Waiting for wallet confirmation...'
+                      : 'You can claim your Spray tokens'}
+              </p>
+              {claimError && <p className="section-text error">{claimError}</p>}
+              <button
+                onClick={handleClaim}
+                disabled={!isConnected || !isEligible || isClaiming}
+              >
+                {isClaiming ? 'Claiming...' : 'Claim my Spray'}
+              </button>
+            </>
+          )}
         </section>
       </main>
     </div>
