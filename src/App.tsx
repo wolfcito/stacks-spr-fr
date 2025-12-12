@@ -1,8 +1,43 @@
+import { useEffect, useState } from 'react'
 import './App.css'
 import { useStacksWallet } from './hooks/useStacksWallet'
 
+interface Distribution {
+  contractAddress: string
+  network: string
+  token: string
+  claims: Record<string, { amount: string }>
+}
+
 function App() {
   const { isConnected, address, connect, disconnect } = useStacksWallet()
+  const [distribution, setDistribution] = useState<Distribution | null>(null)
+  const [distributionError, setDistributionError] = useState<string | null>(null)
+  const [isLoadingDistribution, setIsLoadingDistribution] = useState(true)
+
+  useEffect(() => {
+    async function loadDistribution() {
+      try {
+        const response = await fetch('/spray-distribution.json')
+        if (!response.ok) {
+          throw new Error('Failed to load distribution data')
+        }
+        const data = await response.json()
+        setDistribution(data)
+      } catch (error) {
+        setDistributionError(
+          error instanceof Error ? error.message : 'Failed to load distribution'
+        )
+      } finally {
+        setIsLoadingDistribution(false)
+      }
+    }
+    loadDistribution()
+  }, [])
+
+  const eligibleAmount =
+    distribution && address ? distribution.claims[address]?.amount : null
+  const isEligible = eligibleAmount !== null && eligibleAmount !== undefined
 
   return (
     <div className="app">
@@ -36,19 +71,33 @@ function App() {
 
         <section className="section">
           <h2>Eligibility</h2>
-          <p className="section-text">
-            {isConnected
-              ? 'Eligibility info placeholder'
-              : 'Connect wallet to check eligibility'}
-          </p>
+          {isLoadingDistribution ? (
+            <p className="section-text">Loading distribution...</p>
+          ) : distributionError ? (
+            <p className="section-text error">{distributionError}</p>
+          ) : !isConnected ? (
+            <p className="section-text">Connect wallet to check eligibility</p>
+          ) : isEligible ? (
+            <p className="section-text success">
+              You are eligible to claim {eligibleAmount} tokens.
+            </p>
+          ) : (
+            <p className="section-text warning">
+              This address is not in the current Spray distribution.
+            </p>
+          )}
         </section>
 
         <section className="section">
           <h2>Claim</h2>
           <p className="section-text">
-            {isConnected ? 'Claim status placeholder' : 'Connect wallet to claim'}
+            {!isConnected
+              ? 'Connect wallet to claim'
+              : !isEligible
+                ? 'You are not eligible to claim'
+                : 'You can claim your Spray tokens'}
           </p>
-          <button disabled={!isConnected}>Claim my Spray</button>
+          <button disabled={!isConnected || !isEligible}>Claim my Spray</button>
         </section>
       </main>
     </div>

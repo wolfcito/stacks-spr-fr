@@ -1,0 +1,9 @@
+{
+  "contractAddress": "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ.spray",
+  "network": "testnet",
+  "token": "spray-token",
+  "claims": {
+    "ST23SRWT9A0CYMPW4Q32D0D7KT2YY07PQAVJY3NJZ": { "amount": "1000" },
+    "ST2EXAMPLEADDRESS000000000000000000000000": { "amount": "500" }
+  }
+}
