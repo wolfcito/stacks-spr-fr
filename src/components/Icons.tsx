@@ -12,14 +12,35 @@ export function LogoIcon(props: IconProps) {
         </linearGradient>
       </defs>
       <rect width="32" height="32" rx="8" fill="url(#logo-grad)" />
-      <path
-        d="M8 11h16M8 16h16M8 21h16"
-        stroke="white"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <circle cx="22" cy="11" r="2.5" fill="white" />
-      <circle cx="10" cy="21" r="2.5" fill="white" />
+      <g transform="translate(4, 4)" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 3h.01" />
+        <path d="M7 5h.01" />
+        <path d="M11 7h.01" />
+        <path d="M3 7h.01" />
+        <path d="M7 9h.01" />
+        <path d="M3 11h.01" />
+        <rect width="4" height="4" x="15" y="5" fill="none" />
+        <path d="m19 9 2 2v10c0 .6-.4 1-1 1h-6c-.6 0-1-.4-1-1V11l2-2" />
+        <path d="m13 14 8-2" />
+        <path d="m13 19 8-2" />
+      </g>
+    </svg>
+  )
+}
+
+export function SprayIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M3 3h.01" />
+      <path d="M7 5h.01" />
+      <path d="M11 7h.01" />
+      <path d="M3 7h.01" />
+      <path d="M7 9h.01" />
+      <path d="M3 11h.01" />
+      <rect width="4" height="4" x="15" y="5" />
+      <path d="m19 9 2 2v10c0 .6-.4 1-1 1h-6c-.6 0-1-.4-1-1V11l2-2" />
+      <path d="m13 14 8-2" />
+      <path d="m13 19 8-2" />
     </svg>
   )
 }
