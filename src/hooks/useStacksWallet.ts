@@ -7,23 +7,28 @@ import {
   AppConfig,
   UserSession,
 } from '@stacks/connect'
+import { NETWORK } from '@/config/stacks'
 
 const appConfig = new AppConfig()
 const userSession = new UserSession({ appConfig })
+
+const getAddressPrefix = () => (NETWORK === 'mainnet' ? 'SP' : 'ST')
 
 export function useStacksWallet() {
   const [isConnected, setIsConnected] = useState(false)
   const [address, setAddress] = useState<string | null>(null)
 
   const loadConnectionState = useCallback(() => {
+    const prefix = getAddressPrefix()
+
     // Check new connect API first
     if (checkIsConnected()) {
       const storage = getLocalStorage()
       if (storage?.addresses?.stx?.length) {
-        // Find testnet address (starts with ST)
-        const testnetAddr = storage.addresses.stx.find((a) => a.address.startsWith('ST'))
-        if (testnetAddr) {
-          setAddress(testnetAddr.address)
+        // Find address matching current network
+        const networkAddr = storage.addresses.stx.find((a) => a.address.startsWith(prefix))
+        if (networkAddr) {
+          setAddress(networkAddr.address)
           setIsConnected(true)
           return
         }
@@ -33,9 +38,10 @@ export function useStacksWallet() {
     // Fallback to legacy UserSession
     if (userSession.isUserSignedIn()) {
       const userData = userSession.loadUserData()
-      const testnetAddress = userData.profile?.stxAddress?.testnet
-      if (testnetAddress) {
-        setAddress(testnetAddress)
+      const networkKey = NETWORK === 'mainnet' ? 'mainnet' : 'testnet'
+      const networkAddress = userData.profile?.stxAddress?.[networkKey]
+      if (networkAddress) {
+        setAddress(networkAddress)
         setIsConnected(true)
         return
       }
@@ -50,13 +56,15 @@ export function useStacksWallet() {
   }, [loadConnectionState])
 
   const handleConnect = useCallback(async () => {
+    const prefix = getAddressPrefix()
+
     try {
       const response = await connect()
       if (response?.addresses?.length) {
-        // Find testnet address (starts with ST)
-        const testnetAddr = response.addresses.find((a) => a.address.startsWith('ST'))
-        if (testnetAddr) {
-          setAddress(testnetAddr.address)
+        // Find address matching current network
+        const networkAddr = response.addresses.find((a) => a.address.startsWith(prefix))
+        if (networkAddr) {
+          setAddress(networkAddr.address)
           setIsConnected(true)
         }
       }

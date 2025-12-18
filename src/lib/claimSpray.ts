@@ -1,4 +1,5 @@
 import { openContractCall } from '@stacks/connect'
+import { PostConditionMode } from '@stacks/transactions'
 import {
   stacksNetwork,
   SPRAY_CONTRACT_ADDRESS,
@@ -21,6 +22,8 @@ export async function claimSpray({ onFinish, onCancel }: ClaimOptions) {
       name: 'Stacks Spray Claim',
       icon: window.location.origin + '/favicon.ico',
     },
+    postConditionMode: PostConditionMode.Allow,
+    postConditions: [],
     onFinish: (data) => {
       if (onFinish) onFinish(data.txId)
     },

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import './App.css'
 import { useStacksWallet } from './hooks/useStacksWallet'
 import { claimSpray } from './lib/claimSpray'
@@ -75,6 +76,12 @@ function App() {
             Stacks Testnet.
           </p>
         </header>
+
+        <nav style={{ display: 'flex', gap: 12 }}>
+          <Link to="/disperse" className="tx-link">
+            Go to Disperse &rarr;
+          </Link>
+        </nav>
 
         <section className="section">
           <h2>Wallet</h2>
