@@ -7,10 +7,19 @@ export const NETWORK: NetworkType =
 
 export const SPRAY_CONTRACT_ADDRESS =
   NETWORK === 'mainnet'
-    ? (import.meta.env.VITE_MAINNET_SPRAY_CONTRACT_ADDRESS as string) || ''
-    : 'STGFJDY5CPWX17DVFSN0N95Q6T7V8X4NQ8RB7GF6'
+    ? (import.meta.env.VITE_MAINNET_SPRAY_CONTRACT_ADDRESS as string) ||
+      'SPGFJDY5CPWX17DVFSN0N95Q6T7V8X4NQ8TPA39D'
+    : (import.meta.env.VITE_TESTNET_SPRAY_CONTRACT_ADDRESS as string) ||
+      'STGFJDY5CPWX17DVFSN0N95Q6T7V8X4NQ8RB7GF6'
 
 export const SPRAY_CONTRACT_NAME = 'spray'
+
+export const DISPERSE_CONTRACT_NAME =
+  NETWORK === 'mainnet'
+    ? (import.meta.env.VITE_MAINNET_DISPERSE_CONTRACT_NAME as string) ||
+      'spray-disperse'
+    : (import.meta.env.VITE_TESTNET_DISPERSE_CONTRACT_NAME as string) ||
+      'spray-disperse-v2'
 
 export const stacksNetwork: StacksNetwork =
   NETWORK === 'mainnet'

@@ -3,9 +3,14 @@ import { Link } from 'react-router-dom'
 import { request } from '@stacks/connect'
 import { Cl, contractPrincipalCV } from '@stacks/transactions'
 import { useStacksWallet } from '@/hooks/useStacksWallet'
-import { getTxUrl, NETWORK, SPRAY_CONTRACT_ADDRESS } from '@/config/stacks'
+import {
+  DISPERSE_CONTRACT_NAME,
+  getTxUrl,
+  NETWORK,
+  SPRAY_CONTRACT_ADDRESS,
+} from '@/config/stacks'
 
-const CONTRACT_NAME = 'spray-disperse-v2'
+const CONTRACT_NAME = DISPERSE_CONTRACT_NAME
 const CONTRACT_ID = `${SPRAY_CONTRACT_ADDRESS}.${CONTRACT_NAME}` as const
 
 type ParsedRow = { recipient: string; amount: bigint }
@@ -43,7 +48,7 @@ export default function DispersePage() {
 
   // STX disperse input - using valid testnet addresses
   const [stxRowsText, setStxRowsText] = useState<string>(
-    'ST33EKM95D6JDVM0PS9W3GM2367NZ4FRCPCPEJCP5, 1000000\nSTGJZYZSJJ39THGEMDHB2897HMWNGGECPS0V445Q, 2000000',
+    'SP33EKM95D6JDVM0PS9W3GM2367NZ4FRCPFN8PHGJ, 1000000\nSPGJZYZSJJ39THGEMDHB2897HMWNGGECPRXNY6K3, 2000000',
   )
 
   // SIP-010 disperse input
@@ -52,7 +57,7 @@ export default function DispersePage() {
   )
   const [tokenName, setTokenName] = useState<string>('spray-token')
   const [sipRowsText, setSipRowsText] = useState<string>(
-    'ST33EKM95D6JDVM0PS9W3GM2367NZ4FRCPCPEJCP5, 1000000\nSTGJZYZSJJ39THGEMDHB2897HMWNGGECPS0V445Q, 2000000',
+    'SP33EKM95D6JDVM0PS9W3GM2367NZ4FRCPFN8PHGJ, 1000000\nSPGJZYZSJJ39THGEMDHB2897HMWNGGECPRXNY6K3, 2000000',
   )
 
   const stxTotal = useMemo(() => {
