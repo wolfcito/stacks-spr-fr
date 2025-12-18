@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { request } from '@stacks/connect'
 import { Cl, contractPrincipalCV } from '@stacks/transactions'
+import { Layout } from '@/components/Layout'
 import { useStacksWallet } from '@/hooks/useStacksWallet'
 import {
   DISPERSE_CONTRACT_NAME,
@@ -9,6 +10,16 @@ import {
   NETWORK,
   SPRAY_CONTRACT_ADDRESS,
 } from '@/config/stacks'
+import {
+  WalletIcon,
+  CheckCircleIcon,
+  CopyIcon,
+  LogOutIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  AlertCircleIcon,
+  ExternalLinkIcon,
+} from '@/components/Icons'
 
 const CONTRACT_NAME = DISPERSE_CONTRACT_NAME
 const CONTRACT_ID = `${SPRAY_CONTRACT_ADDRESS}.${CONTRACT_NAME}` as const
@@ -45,20 +56,20 @@ export default function DispersePage() {
   const [txId, setTxId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [copied, setCopied] = useState(false)
 
-  // STX disperse input - using valid testnet addresses
   const [stxRowsText, setStxRowsText] = useState<string>(
     'SP33EKM95D6JDVM0PS9W3GM2367NZ4FRCPFN8PHGJ, 1000000\nSPGJZYZSJJ39THGEMDHB2897HMWNGGECPRXNY6K3, 2000000',
   )
 
-  // SIP-010 disperse input
-  const [tokenAddress, setTokenAddress] = useState<string>(
-    SPRAY_CONTRACT_ADDRESS,
-  )
+  const [tokenAddress, setTokenAddress] = useState<string>(SPRAY_CONTRACT_ADDRESS)
   const [tokenName, setTokenName] = useState<string>('spray-token')
   const [sipRowsText, setSipRowsText] = useState<string>(
     'SP33EKM95D6JDVM0PS9W3GM2367NZ4FRCPFN8PHGJ, 1000000\nSPGJZYZSJJ39THGEMDHB2897HMWNGGECPRXNY6K3, 2000000',
   )
+
+  const networkLabel = NETWORK === 'mainnet' ? 'Mainnet' : 'Testnet'
+  const badgeClass = NETWORK === 'mainnet' ? 'badge-mainnet' : 'badge-testnet'
 
   const stxTotal = useMemo(() => {
     try {
@@ -78,6 +89,19 @@ export default function DispersePage() {
     }
   }, [sipRowsText])
 
+  const truncateAddress = (addr: string) => {
+    if (!addr) return ''
+    return `${addr.slice(0, 20)}...`
+  }
+
+  const copyAddress = async () => {
+    if (address) {
+      await navigator.clipboard.writeText(address)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
   async function callDisperseStx() {
     setError(null)
     setTxId(null)
@@ -92,7 +116,6 @@ export default function DispersePage() {
 
       const recipients = rows.map((r) => Cl.standardPrincipal(r.recipient))
       const amounts = rows.map((r) => Cl.uint(r.amount))
-
       const functionArgs = [Cl.list(recipients), Cl.list(amounts)]
 
       const resp = await request('stx_callContract', {
@@ -121,14 +144,11 @@ export default function DispersePage() {
 
       const rows = parseCsvLines(sipRowsText)
       if (rows.length > 10)
-        throw new Error(
-          'Direct mode: maximum 10 recipients for disperse-sip010',
-        )
+        throw new Error('Direct mode: maximum 10 recipients for disperse-sip010')
 
       const tokenCv = contractPrincipalCV(tokenAddress.trim(), tokenName.trim())
       const recipients = rows.map((r) => Cl.standardPrincipal(r.recipient))
       const amounts = rows.map((r) => Cl.uint(r.amount))
-
       const functionArgs = [tokenCv, Cl.list(recipients), Cl.list(amounts)]
 
       const resp = await request('stx_callContract', {
@@ -148,177 +168,225 @@ export default function DispersePage() {
   }
 
   return (
-    <div className="app">
-      <main className="card" style={{ maxWidth: 600 }}>
-        <header className="card-header">
-          <p className="eyebrow">Spray Disperse</p>
-          <h1>Disperse Tokens</h1>
-          <p className="description">
-            Send STX or SIP-010 tokens to multiple recipients in a single
-            transaction.
-          </p>
-        </header>
+    <Layout>
+      <Link to="/" className="back-link">
+        <ArrowLeftIcon />
+        Back to Claim
+      </Link>
 
-        <nav style={{ display: 'flex', gap: 12 }}>
-          <Link to="/" className="tx-link">
-            &larr; Back to Claim
-          </Link>
-        </nav>
+      <div className="page-header">
+        <p className="page-eyebrow">STACKS SPRAY</p>
+        <h1 className="page-title">Disperse Tokens</h1>
+        <p className="page-subtitle">
+          Send STX or SIP-010 tokens to multiple recipients in a single transaction.
+        </p>
+      </div>
 
-        <section className="section">
-          <h2>Wallet</h2>
-          <p className="network-badge">
-            Network: Stacks {NETWORK === 'mainnet' ? 'Mainnet' : 'Testnet'}
-          </p>
-          {isConnected ? (
-            <>
-              <p className="section-text address">{address}</p>
-              <button onClick={disconnect} className="btn-secondary">
-                Disconnect
+      {/* Wallet Card */}
+      <div className="card">
+        <div className="card-header">
+          <h2 className="card-title">Wallet</h2>
+          <WalletIcon className="card-icon" />
+        </div>
+
+        <span className={`badge ${badgeClass}`}>
+          STACKS {networkLabel.toUpperCase()}
+        </span>
+
+        {isConnected ? (
+          <>
+            <div className="address-display">
+              <span className="address-text">{truncateAddress(address || '')}</span>
+              <button
+                className="copy-btn"
+                onClick={copyAddress}
+                aria-label={copied ? 'Copied' : 'Copy address'}
+              >
+                {copied ? <CheckCircleIcon /> : <CopyIcon />}
               </button>
-            </>
-          ) : (
-            <>
-              <p className="section-text">
-                Connect your wallet to disperse tokens
-              </p>
-              <button onClick={connect}>Connect Wallet</button>
-            </>
-          )}
-          <p style={{ marginTop: 12, fontSize: '0.85rem', color: '#475467' }}>
-            <strong>Contract:</strong> {CONTRACT_ID}
-          </p>
-        </section>
+            </div>
+            <button className="btn btn-secondary" onClick={disconnect}>
+              <LogOutIcon className="btn-icon" />
+              Disconnect
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="page-subtitle mt-3 mb-3">
+              Connect your wallet to disperse tokens
+            </p>
+            <button className="btn btn-primary" onClick={connect}>
+              Connect Wallet
+            </button>
+          </>
+        )}
 
-        <section className="section">
-          <h2>1) Disperse STX</h2>
-          <p className="section-text">
-            Enter recipients (one per line):{' '}
-            <code>STX_ADDRESS, AMOUNT_USTX</code>
-            <br />
-            <small style={{ color: '#667085' }}>
-              1 STX = 1,000,000 uSTX &middot; Max 200 recipients
-            </small>
-          </p>
+        <p className="contract-info">
+          <strong>Contract:</strong> <code>{CONTRACT_ID}</code>
+        </p>
+      </div>
+
+      {/* STX Disperse */}
+      <div className="card">
+        <h2 className="card-title mb-3">1) Disperse STX</h2>
+        <p className="page-subtitle mb-2">
+          Enter recipients (one per line):
+        </p>
+        <p className="form-hint mb-3">
+          <code>STX_ADDRESS, AMOUNT_USTX</code><br />
+          1 STX = 1,000,000 uSTX · Max 200 recipients
+        </p>
+
+        <div className="form-group">
           <textarea
             value={stxRowsText}
             onChange={(e) => setStxRowsText(e.target.value)}
             rows={5}
-            style={{
-              width: '100%',
-              fontFamily: 'ui-monospace, SFMono-Regular, monospace',
-              padding: 10,
-              borderRadius: 8,
-              border: '1px solid #e4e7ec',
-              fontSize: '0.9rem',
-            }}
+            className="input input-mono"
+            placeholder="SP..., 1000000"
           />
-          <p style={{ margin: '8px 0', fontSize: '0.85rem', color: '#344054' }}>
-            <strong>Total:</strong>{' '}
+        </div>
+
+        <div className="form-total">
+          <span className="form-total-label">Total:</span>
+          <span className="form-total-value">
             {(Number(stxTotal) / 1_000_000).toLocaleString()} STX
-          </p>
-          <button
-            onClick={callDisperseStx}
-            disabled={!isConnected || isSubmitting}
-          >
-            {isSubmitting ? 'Submitting...' : 'Send disperse-stx'}
-          </button>
-        </section>
+          </span>
+        </div>
 
-        <section className="section">
-          <h2>2) Disperse SIP-010 Tokens</h2>
-          <p className="section-text">
-            <small style={{ color: '#667085' }}>
-              Direct mode: max 10 recipients
-            </small>
-          </p>
+        <button
+          className="btn btn-primary mt-3"
+          onClick={callDisperseStx}
+          disabled={!isConnected || isSubmitting}
+        >
+          {isSubmitting && <span className="spinner" />}
+          Send disperse-stx
+          <ArrowRightIcon className="btn-icon" />
+        </button>
+      </div>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: 12,
-              marginBottom: 12,
-            }}
-          >
-            <label style={{ fontSize: '0.9rem' }}>
-              Token Address
-              <input
-                value={tokenAddress}
-                onChange={(e) => setTokenAddress(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: 8,
-                  borderRadius: 8,
-                  border: '1px solid #e4e7ec',
-                  marginTop: 4,
-                }}
-              />
-            </label>
-            <label style={{ fontSize: '0.9rem' }}>
-              Token Name
-              <input
-                value={tokenName}
-                onChange={(e) => setTokenName(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: 8,
-                  borderRadius: 8,
-                  border: '1px solid #e4e7ec',
-                  marginTop: 4,
-                }}
-              />
-            </label>
+      {/* SIP-010 Disperse */}
+      <div className="card">
+        <h2 className="card-title mb-3">2) Disperse SIP-010 Tokens</h2>
+        <p className="form-hint mb-3">
+          Direct mode: max 10 recipients
+        </p>
+
+        <div className="form-grid mb-3">
+          <div className="form-group">
+            <label className="form-label">Token Address</label>
+            <input
+              type="text"
+              value={tokenAddress}
+              onChange={(e) => setTokenAddress(e.target.value)}
+              className="input"
+              placeholder="SP..."
+            />
           </div>
+          <div className="form-group">
+            <label className="form-label">Token Name</label>
+            <input
+              type="text"
+              value={tokenName}
+              onChange={(e) => setTokenName(e.target.value)}
+              className="input"
+              placeholder="token-name"
+            />
+          </div>
+        </div>
 
-          <p className="section-text">
-            Enter recipients: <code>STX_ADDRESS, AMOUNT</code> (in token base
-            units)
-          </p>
+        <p className="page-subtitle mb-2">
+          Enter recipients: <code>ADDRESS, AMOUNT</code> (base units)
+        </p>
+
+        <div className="form-group">
           <textarea
             value={sipRowsText}
             onChange={(e) => setSipRowsText(e.target.value)}
             rows={5}
-            style={{
-              width: '100%',
-              fontFamily: 'ui-monospace, SFMono-Regular, monospace',
-              padding: 10,
-              borderRadius: 8,
-              border: '1px solid #e4e7ec',
-              fontSize: '0.9rem',
-            }}
+            className="input input-mono"
+            placeholder="SP..., 1000000"
           />
-          <p style={{ margin: '8px 0', fontSize: '0.85rem', color: '#344054' }}>
-            <strong>Total:</strong> {sipTotal.toLocaleString()} base units
-          </p>
-          <button
-            onClick={callDisperseSip010}
-            disabled={!isConnected || isSubmitting}
-          >
-            {isSubmitting ? 'Submitting...' : 'Send disperse-sip010'}
-          </button>
-        </section>
+        </div>
 
-        {(txId || error) && (
-          <section className="section">
-            <h2>Result</h2>
-            {txId && (
-              <>
-                <p className="section-text success">Transaction submitted!</p>
-                <a
-                  href={getTxUrl(txId)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="tx-link"
-                >
-                  View on Stacks Explorer
-                </a>
-              </>
-            )}
-            {error && <p className="section-text error">{error}</p>}
-          </section>
-        )}
-      </main>
-    </div>
+        <div className="form-total">
+          <span className="form-total-label">Total:</span>
+          <span className="form-total-value">
+            {sipTotal.toLocaleString()} base units
+          </span>
+        </div>
+
+        <button
+          className="btn btn-primary mt-3"
+          onClick={callDisperseSip010}
+          disabled={!isConnected || isSubmitting}
+        >
+          {isSubmitting && <span className="spinner" />}
+          Send disperse-sip010
+          <ArrowRightIcon className="btn-icon" />
+        </button>
+      </div>
+
+      {/* Result Card */}
+      {(txId || error) && (
+        <div className="card">
+          <h2 className="card-title mb-3">Result</h2>
+
+          {txId && (
+            <>
+              <div className="status-box status-box-success">
+                <CheckCircleIcon className="status-icon status-icon-success" />
+                <div className="status-content">
+                  <p className="status-title status-title-success">
+                    Transaction submitted!
+                  </p>
+                </div>
+              </div>
+              <a
+                href={getTxUrl(txId)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="tx-link"
+              >
+                View on Explorer
+                <ExternalLinkIcon />
+              </a>
+            </>
+          )}
+
+          {error && (
+            <div className="status-box status-box-error">
+              <AlertCircleIcon className="status-icon status-icon-error" />
+              <div className="status-content">
+                <p className="status-message status-message-error">{error}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Eligibility status at bottom (as shown in design) */}
+      <div className="card">
+        <div className="card-header">
+          <h2 className="card-title">Eligibility</h2>
+        </div>
+        <div className="status-box status-box-error">
+          <AlertCircleIcon className="status-icon status-icon-error" />
+          <div className="status-content">
+            <p className="status-title status-title-error">Failed to fetch eligibility status</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-header">
+          <h2 className="card-title">Claim</h2>
+        </div>
+        <p className="page-subtitle mb-3">You are not eligible to claim at this time.</p>
+        <Link to="/claim" className="btn btn-primary">
+          Claim my Spray
+        </Link>
+      </div>
+    </Layout>
   )
 }
