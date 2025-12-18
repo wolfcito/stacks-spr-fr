@@ -1,17 +1,14 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
 import { Layout } from '@/components/Layout'
 import { useStacksWallet } from '@/hooks/useStacksWallet'
 import { NETWORK } from '@/config/stacks'
 import {
   WalletIcon,
-  BroadcastIcon,
   CheckCircleIcon,
   CopyIcon,
   LogOutIcon,
-  ArrowRightIcon,
   CubeIcon,
 } from '@/components/Icons'
-import { useState } from 'react'
 
 export default function HomePage() {
   const { isConnected, address, connect, disconnect } = useStacksWallet()
@@ -94,34 +91,34 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* Action Cards */}
-      <div className="action-card">
-        <div className="action-icon">
-          <BroadcastIcon />
-        </div>
-        <h3 className="action-title">Dispersar Tokens</h3>
-        <p className="action-description">
-          Envía STX o tokens SIP-010 a múltiples destinatarios en una sola transacción.
-        </p>
-        <Link to="/disperse" className="btn btn-primary">
-          Ir a Dispersar
-          <ArrowRightIcon className="btn-icon" />
-        </Link>
-      </div>
+      {/* Info Cards */}
+      {isConnected && (
+        <>
+          <div className="card">
+            <h3 className="card-title mb-2">Red Activa</h3>
+            <p className="page-subtitle">
+              Estás conectado a <strong>Stacks {networkLabel}</strong>.
+              {NETWORK === 'testnet' && ' Esta es una red de pruebas.'}
+            </p>
+          </div>
 
-      <div className="action-card">
-        <div className="action-icon">
-          <CheckCircleIcon />
-        </div>
-        <h3 className="action-title">Reclamar Tokens</h3>
-        <p className="action-description">
-          Verifica tu elegibilidad y reclama tus tokens de Stacks Spray.
-        </p>
-        <Link to="/claim" className="btn btn-outline">
-          Ir a Reclamar
-          <ArrowRightIcon className="btn-icon" />
-        </Link>
-      </div>
+          <div className="card">
+            <h3 className="card-title mb-2">Dirección Completa</h3>
+            <div className="address-display">
+              <span className="address-text" style={{ whiteSpace: 'normal', wordBreak: 'break-all' }}>
+                {address}
+              </span>
+              <button
+                className="copy-btn"
+                onClick={copyAddress}
+                aria-label={copied ? 'Copiado' : 'Copiar dirección'}
+              >
+                {copied ? <CheckCircleIcon /> : <CopyIcon />}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </Layout>
   )
 }

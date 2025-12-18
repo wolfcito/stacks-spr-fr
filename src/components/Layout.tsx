@@ -5,9 +5,9 @@ import {
   LogoIcon,
   MoonIcon,
   SunIcon,
-  HomeIcon,
-  HistoryIcon,
-  SettingsIcon,
+  WalletIcon,
+  BroadcastIcon,
+  GiftIcon,
 } from './Icons'
 
 interface LayoutProps {
@@ -63,25 +63,25 @@ export function Layout({ children, showNav = true }: LayoutProps) {
       {showNav && (
         <nav className="bottom-nav" aria-label="Main navigation">
           <NavLink
+            to="/disperse"
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          >
+            <BroadcastIcon />
+            <span>Dispersar</span>
+          </NavLink>
+          <NavLink
+            to="/claim"
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          >
+            <GiftIcon />
+            <span>Reclamar</span>
+          </NavLink>
+          <NavLink
             to="/"
-            className={({ isActive }) => `nav-item ${isActive && location.pathname === '/' ? 'active' : ''}`}
+            className={() => `nav-item ${location.pathname === '/' ? 'active' : ''}`}
           >
-            <HomeIcon />
-            <span>Inicio</span>
-          </NavLink>
-          <NavLink
-            to="/history"
-            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-          >
-            <HistoryIcon />
-            <span>Historial</span>
-          </NavLink>
-          <NavLink
-            to="/settings"
-            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-          >
-            <SettingsIcon />
-            <span>Ajustes</span>
+            <WalletIcon />
+            <span>Wallet</span>
           </NavLink>
         </nav>
       )}

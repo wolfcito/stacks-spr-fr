@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import { Link } from 'react-router-dom'
 import { request } from '@stacks/connect'
 import { Cl, contractPrincipalCV } from '@stacks/transactions'
 import { Layout } from '@/components/Layout'
@@ -11,11 +10,7 @@ import {
   SPRAY_CONTRACT_ADDRESS,
 } from '@/config/stacks'
 import {
-  WalletIcon,
   CheckCircleIcon,
-  CopyIcon,
-  LogOutIcon,
-  ArrowLeftIcon,
   ArrowRightIcon,
   AlertCircleIcon,
   ExternalLinkIcon,
@@ -35,28 +30,27 @@ function parseCsvLines(input: string): ParsedRow[] {
   const rows: ParsedRow[] = lines.map((line, idx) => {
     const parts = line.split(',').map((p) => p.trim())
     if (parts.length !== 2)
-      throw new Error(`Line ${idx + 1}: use "STX_ADDRESS, AMOUNT"`)
+      throw new Error(`Línea ${idx + 1}: usa "STX_ADDRESS, CANTIDAD"`)
     const recipient = parts[0]
     const amountStr = parts[1]
 
     if (!recipient.startsWith('S'))
-      throw new Error(`Line ${idx + 1}: invalid recipient (${recipient})`)
+      throw new Error(`Línea ${idx + 1}: destinatario inválido (${recipient})`)
     const amount = BigInt(amountStr)
-    if (amount <= 0n) throw new Error(`Line ${idx + 1}: amount must be > 0`)
+    if (amount <= 0n) throw new Error(`Línea ${idx + 1}: la cantidad debe ser > 0`)
 
     return { recipient, amount }
   })
 
-  if (rows.length === 0) throw new Error('Add at least 1 recipient')
+  if (rows.length === 0) throw new Error('Agrega al menos 1 destinatario')
   return rows
 }
 
 export default function DispersePage() {
-  const { isConnected, address, connect, disconnect } = useStacksWallet()
+  const { isConnected, connect } = useStacksWallet()
   const [txId, setTxId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [copied, setCopied] = useState(false)
 
   const [stxRowsText, setStxRowsText] = useState<string>(
     'SP33EKM95D6JDVM0PS9W3GM2367NZ4FRCPFN8PHGJ, 1000000\nSPGJZYZSJJ39THGEMDHB2897HMWNGGECPRXNY6K3, 2000000',
@@ -69,7 +63,6 @@ export default function DispersePage() {
   )
 
   const networkLabel = NETWORK === 'mainnet' ? 'Mainnet' : 'Testnet'
-  const badgeClass = NETWORK === 'mainnet' ? 'badge-mainnet' : 'badge-testnet'
 
   const stxTotal = useMemo(() => {
     try {
@@ -89,30 +82,17 @@ export default function DispersePage() {
     }
   }, [sipRowsText])
 
-  const truncateAddress = (addr: string) => {
-    if (!addr) return ''
-    return `${addr.slice(0, 20)}...`
-  }
-
-  const copyAddress = async () => {
-    if (address) {
-      await navigator.clipboard.writeText(address)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }
-  }
-
   async function callDisperseStx() {
     setError(null)
     setTxId(null)
     setIsSubmitting(true)
 
     try {
-      if (!isConnected) throw new Error('Connect wallet first')
+      if (!isConnected) throw new Error('Conecta tu wallet primero')
 
       const rows = parseCsvLines(stxRowsText)
       if (rows.length > 200)
-        throw new Error('Maximum 200 recipients for STX disperse')
+        throw new Error('Máximo 200 destinatarios para disperse STX')
 
       const recipients = rows.map((r) => Cl.standardPrincipal(r.recipient))
       const amounts = rows.map((r) => Cl.uint(r.amount))
@@ -140,11 +120,11 @@ export default function DispersePage() {
     setIsSubmitting(true)
 
     try {
-      if (!isConnected) throw new Error('Connect wallet first')
+      if (!isConnected) throw new Error('Conecta tu wallet primero')
 
       const rows = parseCsvLines(sipRowsText)
       if (rows.length > 10)
-        throw new Error('Direct mode: maximum 10 recipients for disperse-sip010')
+        throw new Error('Modo directo: máximo 10 destinatarios para disperse-sip010')
 
       const tokenCv = contractPrincipalCV(tokenAddress.trim(), tokenName.trim())
       const recipients = rows.map((r) => Cl.standardPrincipal(r.recipient))
@@ -169,72 +149,49 @@ export default function DispersePage() {
 
   return (
     <Layout>
-      <Link to="/" className="back-link">
-        <ArrowLeftIcon />
-        Back to Claim
-      </Link>
-
       <div className="page-header">
         <p className="page-eyebrow">STACKS SPRAY</p>
-        <h1 className="page-title">Disperse Tokens</h1>
+        <h1 className="page-title">Dispersar Tokens</h1>
         <p className="page-subtitle">
-          Send STX or SIP-010 tokens to multiple recipients in a single transaction.
+          Envía STX o tokens SIP-010 a múltiples destinatarios en una sola transacción.
         </p>
       </div>
 
-      {/* Wallet Card */}
-      <div className="card">
-        <div className="card-header">
-          <h2 className="card-title">Wallet</h2>
-          <WalletIcon className="card-icon" />
-        </div>
-
-        <span className={`badge ${badgeClass}`}>
-          STACKS {networkLabel.toUpperCase()}
-        </span>
-
-        {isConnected ? (
-          <>
-            <div className="address-display">
-              <span className="address-text">{truncateAddress(address || '')}</span>
-              <button
-                className="copy-btn"
-                onClick={copyAddress}
-                aria-label={copied ? 'Copied' : 'Copy address'}
-              >
-                {copied ? <CheckCircleIcon /> : <CopyIcon />}
-              </button>
+      {/* Connect wallet prompt */}
+      {!isConnected && (
+        <div className="card">
+          <div className="status-box status-box-warning">
+            <AlertCircleIcon className="status-icon status-icon-warning" />
+            <div className="status-content">
+              <p className="status-title status-title-warning">Wallet no conectada</p>
+              <p className="status-message status-message-warning">
+                Conecta tu wallet para dispersar tokens.
+              </p>
             </div>
-            <button className="btn btn-secondary" onClick={disconnect}>
-              <LogOutIcon className="btn-icon" />
-              Disconnect
-            </button>
-          </>
-        ) : (
-          <>
-            <p className="page-subtitle mt-3 mb-3">
-              Connect your wallet to disperse tokens
-            </p>
-            <button className="btn btn-primary" onClick={connect}>
-              Connect Wallet
-            </button>
-          </>
-        )}
+          </div>
+          <button className="btn btn-primary" onClick={connect}>
+            Conectar Wallet
+          </button>
+        </div>
+      )}
 
-        <p className="contract-info">
-          <strong>Contract:</strong> <code>{CONTRACT_ID}</code>
+      {/* Contract info */}
+      <div className="card">
+        <p className="form-hint">
+          <strong>Red:</strong> Stacks {networkLabel}<br />
+          <strong>Contrato:</strong> <code>{CONTRACT_ID}</code>
         </p>
       </div>
 
       {/* STX Disperse */}
       <div className="card">
-        <h2 className="card-title mb-3">1) Disperse STX</h2>
+        <h2 className="card-title mb-3">1) Dispersar STX</h2>
         <p className="page-subtitle mb-2">
-          Enter recipients (one per line):
+          Ingresa los destinatarios (uno por línea):
         </p>
         <p className="form-hint mb-3">
-          <code>STX_ADDRESS, AMOUNT_USTX</code><br />
-          1 STX = 1,000,000 uSTX · Max 200 recipients
+          <code>DIRECCIÓN_STX, CANTIDAD_USTX</code><br />
+          1 STX = 1,000,000 uSTX · Máx 200 destinatarios
         </p>
 
         <div className="form-group">
@@ -260,21 +217,21 @@ export default function DispersePage() {
           disabled={!isConnected || isSubmitting}
         >
           {isSubmitting && <span className="spinner" />}
-          Send disperse-stx
+          Enviar disperse-stx
           <ArrowRightIcon className="btn-icon" />
         </button>
       </div>
 
       {/* SIP-010 Disperse */}
       <div className="card">
-        <h2 className="card-title mb-3">2) Disperse SIP-010 Tokens</h2>
+        <h2 className="card-title mb-3">2) Dispersar Tokens SIP-010</h2>
         <p className="form-hint mb-3">
-          Direct mode: max 10 recipients
+          Modo directo: máx 10 destinatarios
         </p>
 
         <div className="form-grid mb-3">
           <div className="form-group">
-            <label className="form-label">Token Address</label>
+            <label className="form-label">Dirección del Token</label>
             <input
               type="text"
               value={tokenAddress}
@@ -284,7 +241,7 @@ export default function DispersePage() {
             />
           </div>
           <div className="form-group">
-            <label className="form-label">Token Name</label>
+            <label className="form-label">Nombre del Token</label>
             <input
               type="text"
               value={tokenName}
@@ -296,7 +253,7 @@ export default function DispersePage() {
         </div>
 
         <p className="page-subtitle mb-2">
-          Enter recipients: <code>ADDRESS, AMOUNT</code> (base units)
+          Ingresa destinatarios: <code>DIRECCIÓN, CANTIDAD</code> (unidades base)
         </p>
 
         <div className="form-group">
@@ -312,7 +269,7 @@ export default function DispersePage() {
         <div className="form-total">
           <span className="form-total-label">Total:</span>
           <span className="form-total-value">
-            {sipTotal.toLocaleString()} base units
+            {sipTotal.toLocaleString()} unidades base
           </span>
         </div>
 
@@ -322,7 +279,7 @@ export default function DispersePage() {
           disabled={!isConnected || isSubmitting}
         >
           {isSubmitting && <span className="spinner" />}
-          Send disperse-sip010
+          Enviar disperse-sip010
           <ArrowRightIcon className="btn-icon" />
         </button>
       </div>
@@ -330,7 +287,7 @@ export default function DispersePage() {
       {/* Result Card */}
       {(txId || error) && (
         <div className="card">
-          <h2 className="card-title mb-3">Result</h2>
+          <h2 className="card-title mb-3">Resultado</h2>
 
           {txId && (
             <>
@@ -338,7 +295,7 @@ export default function DispersePage() {
                 <CheckCircleIcon className="status-icon status-icon-success" />
                 <div className="status-content">
                   <p className="status-title status-title-success">
-                    Transaction submitted!
+                    ¡Transacción enviada!
                   </p>
                 </div>
               </div>
@@ -348,7 +305,7 @@ export default function DispersePage() {
                 rel="noopener noreferrer"
                 className="tx-link"
               >
-                View on Explorer
+                Ver en Explorer
                 <ExternalLinkIcon />
               </a>
             </>
@@ -364,29 +321,6 @@ export default function DispersePage() {
           )}
         </div>
       )}
-
-      {/* Eligibility status at bottom (as shown in design) */}
-      <div className="card">
-        <div className="card-header">
-          <h2 className="card-title">Eligibility</h2>
-        </div>
-        <div className="status-box status-box-error">
-          <AlertCircleIcon className="status-icon status-icon-error" />
-          <div className="status-content">
-            <p className="status-title status-title-error">Failed to fetch eligibility status</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="card">
-        <div className="card-header">
-          <h2 className="card-title">Claim</h2>
-        </div>
-        <p className="page-subtitle mb-3">You are not eligible to claim at this time.</p>
-        <Link to="/claim" className="btn btn-primary">
-          Claim my Spray
-        </Link>
-      </div>
     </Layout>
   )
 }
