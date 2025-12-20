@@ -43,6 +43,33 @@ export function Layout({ children, showNav = true }: LayoutProps) {
           <LogoIcon className="logo-icon" />
           <span>STACKS SPRAY</span>
         </div>
+
+        {showNav && (
+          <nav className="desktop-nav" aria-label="Main navigation">
+            <NavLink
+              to="/disperse"
+              className={({ isActive }) => `desktop-nav-item ${isActive ? 'active' : ''}`}
+            >
+              <BroadcastIcon />
+              <span>Dispersar</span>
+            </NavLink>
+            <NavLink
+              to="/claim"
+              className={({ isActive }) => `desktop-nav-item ${isActive ? 'active' : ''}`}
+            >
+              <GiftIcon />
+              <span>Reclamar</span>
+            </NavLink>
+            <NavLink
+              to="/"
+              className={() => `desktop-nav-item ${location.pathname === '/' ? 'active' : ''}`}
+            >
+              <WalletIcon />
+              <span>Wallet</span>
+            </NavLink>
+          </nav>
+        )}
+
         <button
           className="theme-toggle"
           onClick={toggleTheme}
